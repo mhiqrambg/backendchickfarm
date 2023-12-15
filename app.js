@@ -7,8 +7,9 @@ app.listen(port, () => {
 });
 
 //ROUTER
+
 const akun_userRouter = require('./app/api/akun_user/router');
-const produkRouter = require('./app/api/produk/router');
+const profileRouter = require('../backendchickfarm/app/api/profile/router');
 
 const v1 = '/api/v1/';
 
@@ -22,6 +23,6 @@ app.get('/', (req, res) => {
 });
 
 app.use(v1, akun_userRouter);
-app.use(v1, produkRouter);
+app.use(v1, profileRouter);
 
 module.exports = app;

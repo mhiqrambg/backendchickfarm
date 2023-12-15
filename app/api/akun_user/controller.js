@@ -1,26 +1,23 @@
 const db = require('../../db/connection');
 const { validateNameLength } = require('./model');
-const { generateRandomNumber } = require('../../service/service');
 
-const getAllUsers = (req, res) => {
+const index = (req, res) => {
   const query = 'SELECT * FROM akun_user';
   db.query(query, (err, results) => {
     if (err) throw err;
-    res.json(results);
+    res.json({ akun_user: results });
   });
 };
-
-const createUsers = async (req, res) => {
+const create = async (req, res) => {
   const { username, password } = req.body;
 
-  // Validasi panjang nama
   if (!validateNameLength(username)) {
     return res.status(400).json({
-      error: 'Panjang nama harus antara 3 dan 25 karakter.',
+      error:
+        'Panjang username harus antara 8 dan 15 karakter dan tidak mengandung spasi.',
     });
   }
 
-  // Pastikan username dan password diisi
   if (!username || !password) {
     return res.status(400).json({
       error: 'Username dan password harus diisi.',
@@ -31,7 +28,6 @@ const createUsers = async (req, res) => {
 
   try {
     const result = await new Promise((resolve, reject) => {
-      // Eksekusi query dengan parameter username dan password
       db.query(query, [username, password], (err, result) => {
         if (err) {
           reject(err);
@@ -41,7 +37,6 @@ const createUsers = async (req, res) => {
       });
     });
 
-    // Tanggapan berhasil jika tidak ada kesalahan
     return res.status(201).json({
       message: 'Akun berhasil dibuat',
       userId: result.insertId,
@@ -58,9 +53,8 @@ const createUsers = async (req, res) => {
   }
 };
 
-const getUserById = async (req, res) => {
-  const userId = req.params.id_users;
-  console.log(userId);
+const find = async (req, res) => {
+  const userId = req.params.id;
 
   if (!userId || isNaN(userId) || parseInt(userId) <= 0) {
     return res.status(400).json({ error: 'ID pengguna tidak valid.' });
@@ -70,7 +64,6 @@ const getUserById = async (req, res) => {
 
   try {
     const results = await new Promise((resolve, reject) => {
-      // Eksekusi query dengan parameter userId
       db.query(query, [userId], (err, results) => {
         if (err) {
           reject(err);
@@ -81,14 +74,11 @@ const getUserById = async (req, res) => {
     });
 
     if (results.length === 0) {
-      // Jika tidak ada hasil (user tidak ditemukan)
       return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
     }
 
-    // Kirim data pengguna yang ditemukan sebagai respons
     res.json(results[0]);
   } catch (error) {
-    // Tangani kesalahan dari operasi asynchronous
     console.error('Error during asynchronous operation:', error);
     res
       .status(500)
@@ -96,16 +86,14 @@ const getUserById = async (req, res) => {
   }
 };
 
-const deleteUserById = async (req, res) => {
+const destroy = async (req, res) => {
   const userId = req.params.id_user;
 
-  // Validasi ID pengguna
   if (!userId || isNaN(userId) || parseInt(userId) <= 0) {
     return res.status(400).json({ error: 'ID pengguna tidak valid.' });
   }
 
   try {
-    // Dapatkan username berdasarkan ID pengguna
     const getUsernameQuery = 'SELECT username FROM akun_user WHERE id_user = ?';
     const usernameResult = await new Promise((resolve, reject) => {
       db.query(getUsernameQuery, [userId], (err, result) => {
@@ -117,14 +105,12 @@ const deleteUserById = async (req, res) => {
       });
     });
 
-    // Periksa apakah pengguna dengan ID tersebut ditemukan
     if (usernameResult.length === 0) {
       return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
     }
 
     const username = usernameResult[0].username;
 
-    // Hapus pengguna berdasarkan ID dan username
     const deleteQuery =
       'DELETE FROM akun_user WHERE id_user = ? AND username = ?';
     const deleteResult = await new Promise((resolve, reject) => {
@@ -137,12 +123,10 @@ const deleteUserById = async (req, res) => {
       });
     });
 
-    // Periksa apakah pengguna berhasil dihapus
     if (deleteResult.affectedRows === 0) {
       return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
     }
 
-    // Tanggapan berhasil jika tidak ada kesalahan
     return res
       .status(200)
       .json({ message: `Pengguna ${username} berhasil dihapus.` });
@@ -155,8 +139,8 @@ const deleteUserById = async (req, res) => {
 };
 
 module.exports = {
-  getAllUsers,
-  getUserById,
-  createUsers,
-  deleteUserById,
+  index,
+  find,
+  create,
+  destroy,
 };
